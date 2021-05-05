@@ -111,6 +111,6 @@ class DataGenerator(BaseDataGenerator):
 
         batch_images, batch_boxes = np.array(batch_images), np.array(batch_boxes)
         
-        batch_boxes = preprocess_true_boxes(batch_boxes, MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
+        true_boxes = preprocess_true_boxes(batch_boxes, MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
 
-        return [*batch_boxes, batch_images], None
+        return [*true_boxes, batch_images], None
