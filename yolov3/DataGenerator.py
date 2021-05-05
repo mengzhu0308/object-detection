@@ -17,7 +17,6 @@ def preprocess_true_boxes(true_boxes, model_input_shape, anchors, num_classes):
     num_anchors = len(anchors) // NUM_LAYERS
 
     true_boxes = np.array(true_boxes, dtype='float32')
-    model_input_shape = np.array(model_input_shape, dtype='int32')
     boxes_xy = (true_boxes[..., 0:2] + true_boxes[..., 2:4]) // 2
     boxes_wh = true_boxes[..., 2:4] - true_boxes[..., 0:2]
 
