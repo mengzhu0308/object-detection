@@ -78,6 +78,8 @@ def get_detect_rsts(outputs,
                     score_threshold=.6,
                     iou_threshold=.5):
     num_layers = len(outputs)
+    model_input_shape = np.array(model_input_shape)
+    image_shape = np.array(image_shape)
 
     boxes = []
     box_scores = []
