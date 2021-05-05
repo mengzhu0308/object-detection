@@ -143,13 +143,12 @@ class YOLOLoss(Layer):
         m = K.shape(outputs[0])[0]
 
         for l in range(num_layers):
-            object_mask = targets[l][..., 4:5]
-            true_class_probs = targets[l][..., 5:]
-
             raw_pred = outputs[l]
             grid, pred_xy, pred_wh = yolo_head(outputs[l], self.anchors[ANCHOR_MASK[l]], model_input_shape)
             pred_box = K.concatenate([pred_xy, pred_wh])
-
+            
+            object_mask = targets[l][..., 4:5]
+            true_class_probs = targets[l][..., 5:]
             # Darknet raw box to calculate loss.
             raw_true_xy = targets[l][..., :2] * grid_shapes[l][::-1] - grid
             raw_true_wh = K.log(targets[l][..., 2:4] * model_input_shape[::-1] / self.anchors[ANCHOR_MASK[l]])
