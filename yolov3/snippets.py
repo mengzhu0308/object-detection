@@ -21,6 +21,7 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 def yolo_head(feats, anchors, model_input_shape):
+    dtype = feats.dtype
     num_anchors = len(anchors)
     anchors = np.reshape(anchors, [1, 1, 1, num_anchors, 2])
 
@@ -30,23 +31,25 @@ def yolo_head(feats, anchors, model_input_shape):
     grid_y = np.tile(np.reshape(np.arange(grid_shape[0]), [-1, 1, 1, 1]),
                      [1, grid_shape[1], 1, 1])
     grid = np.concatenate([grid_x, grid_y], axis=-1)
-    grid = grid.astype(feats.dtype)
+    grid = grid.astype(dtype)
 
-    box_xy = (sigmoid(feats[..., :2]) + grid) / grid_shape[::-1].astype(feats.dtype)
-    box_wh = np.exp(feats[..., 2:4]) * anchors / model_input_shape[::-1].astype(feats.dtype)
-    box_confidence = sigmoid(feats[..., 4:5])
-    box_class_probs = sigmoid(feats[..., 5:])
+    box_xy = ((sigmoid(feats[..., :2]) + grid) / grid_shape[::-1]).astype(dtype)
+    box_wh = (np.exp(feats[..., 2:4]) * anchors / model_input_shape[::-1]).astype(dtype)
+    box_confidence = sigmoid(feats[..., 4:5]).astype(dtype)
+    box_class_probs = sigmoid(feats[..., 5:]).astype(dtype)
 
     return box_xy, box_wh, box_confidence, box_class_probs
 
 def yolo_correct_boxes(box_xy, box_wh, model_input_shape, image_shape):
-    model_input_shape_wh = model_input_shape[::-1].astype(box_xy.dtype)
-    image_shape_wh = image_shape[::-1].astype(box_xy.dtype)
-    new_shape_wh = np.round(image_shape_wh * np.min(model_input_shape_wh / image_shape_wh))
-    offset = (model_input_shape_wh - new_shape_wh) / 2. / model_input_shape_wh
-    scale = model_input_shape_wh / new_shape_wh
-    box_xy = (box_xy - offset) * scale
-    box_wh *= scale
+    dtype = box_xy.dtype
+
+    min_scale = min([model_input_shape[i] / image_shape[i] for i in range(2)])
+    new_shape = [math.floor(image_shape[i] * min_scale + 0.5) for i in range(2)]
+    offset = [(model_input_shape[i] - new_shape[i]) / 2 / model_input_shape[i] for i in range(2)]
+    scale = [model_input_shape[i] / new_shape[i] for i in range(2)]
+
+    box_xy = (box_xy - offset[::-1]) * scale[::-1]
+    box_wh *= scale[::-1]
 
     box_mins = box_xy - (box_wh / 2.)
     box_maxes = box_xy + (box_wh / 2.)
@@ -58,9 +61,10 @@ def yolo_correct_boxes(box_xy, box_wh, model_input_shape, image_shape):
     ], axis=-1)
 
     # Scale boxes back to original image shape.
-    boxes *= np.concatenate([image_shape_wh, image_shape_wh], axis=-1)
+    boxes[..., [0, 2]] *= image_shape[1]
+    boxes[..., [1, 3]] *= image_shape[0]
 
-    return boxes
+    return boxes.astype(dtype)
 
 def yolo_boxes_and_scores(feats, anchors, num_classes, model_input_shape, image_shape):
     box_xy, box_wh, box_confidence, box_class_probs = yolo_head(feats, anchors, model_input_shape)
