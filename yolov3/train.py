@@ -71,6 +71,9 @@ if __name__ == '__main__':
         out_boxes, out_scores, out_classes = get_detect_rsts(preds, anchors, num_classes, MODEL_INPUT_SHAPE, image_shape)
 
         counter = Counter()
+        FONT = cv2.FONT_HERSHEY_PLAIN
+        FONT_SCALE = 1
+        FONT_THICKNESS = 1
         for i, c in enumerate(out_classes):
             predicted_class = class_names[c]
             box = out_boxes[i]
@@ -83,7 +86,9 @@ if __name__ == '__main__':
             cnt = counter[key]
             if cnt == 1:
                 cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
-            cv2.putText(src_img, label, (left, bottom + cnt - 1), cv2.FONT_ITALIC, 1, (255, 0, 0), bottomLeftOrigin=True)
+            font_h = cv2.getTextSize(label, FONT, FONT_SCALE, FONT_THICKNESS)[1]
+            cv2.putText(src_img, label, (left, bottom + (cnt - 1) * font_h), FONT, FONT_SCALE, (255, 0, 0), 
+                        thickness=FONT_THICKNESS)
             cv2.imwrite('detect_img/dst.jpg', src_img)
 
     class Show(Callback):
