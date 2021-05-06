@@ -170,8 +170,7 @@ class YOLOLoss(Layer):
             ignore_mask = ignore_mask.stack()
             ignore_mask = K.expand_dims(ignore_mask, -1)
 
-            xy_loss = (object_mask * box_loss_scale *
-                       K.binary_crossentropy(raw_true_xy, raw_pred[..., 0:2], from_logits=True))
+            xy_loss = object_mask * box_loss_scale * 0.5 * K.square(raw_true_xy - raw_pred[..., 0:2])
             wh_loss = object_mask * box_loss_scale * 0.5 * K.square(raw_true_wh - raw_pred[..., 2:4])
             confidence_loss = ((object_mask + (1 - object_mask) * ignore_mask) *
                                K.binary_crossentropy(object_mask, raw_pred[..., 4:5], from_logits=True))
