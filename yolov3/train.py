@@ -59,7 +59,7 @@ if __name__ == '__main__':
         return new_image
 
     def show():
-        src_img = cv2.imread('detect_img/2007_006364.jpg')
+        src_img = cv2.imread('detect_img/src.jpg')
         image_shape = src_img.shape[:2]
         input_image = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
         input_image = resize(input_image).astype('float32') / 255
@@ -84,7 +84,7 @@ if __name__ == '__main__':
             if cnt == 1:
                 cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
             cv2.putText(src_img, label, (left, bottom + cnt - 1), cv2.FONT_ITALIC, 1, (255, 0, 0), bottomLeftOrigin=True)
-            cv2.imwrite('detect_img/2007_006364_rst.jpg', src_img)
+            cv2.imwrite('detect_img/dst.jpg', src_img)
 
     class Show(Callback):
         def __init__(self):
