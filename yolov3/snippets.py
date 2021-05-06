@@ -16,7 +16,7 @@ NUM_LAYERS = 3
 DOWNSAMPLING_SCALE = [32, 16, 8]
 NUM_CLUSTER = 9
 ANCHOR_MASK = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-MAX_NUM_BOXES = 10
+MAX_NUM_BOXES = 8
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -95,15 +95,23 @@ def get_detect_rsts(outputs,
         box_scores.append(_box_scores)
     boxes = np.concatenate(boxes, axis=0)
     box_scores = np.concatenate(box_scores, axis=0)
+    
+    boxes = np.round(boxes).astype('int32')
+    boxes[:, [0, 2]] = np.minimum(np.maximum(boxes[:, [0, 2]], 0), image_shape[1])
+    boxes[:, [1, 3]] = np.minimum(np.maximum(boxes[:, [1, 3]], 0), image_shape[0])
+    boxes_w = boxes[:, 2] - boxes[:, 0]
+    boxes_h = boxes[:, 3] - boxes[:, 1]
+    filter_index = np.logical_and(boxes_w > 1, boxes_h > 1)
+    boxes = boxes[filter_index]
+    box_scores = box_scores[filter_index]
 
     mask = (box_scores >= score_threshold)
     boxes_ = []
     scores_ = []
     classes_ = []
     for c in range(num_classes):
-        mask_index = np.nonzero(mask[:, c])[0]
-        class_boxes = boxes[mask_index]
-        class_box_scores = box_scores[:, c][mask_index]
+        class_boxes = boxes[mask[:, c]]
+        class_box_scores = box_scores[:, c][mask[:, c]]
         nms_index = nms(class_boxes, class_box_scores, iou_threshold=iou_threshold, max_num_boxes=MAX_NUM_BOXES)
         class_boxes = class_boxes[nms_index]
         class_box_scores = class_box_scores[nms_index]
@@ -114,11 +122,6 @@ def get_detect_rsts(outputs,
     boxes_ = np.concatenate(boxes_, axis=0)
     scores_ = np.concatenate(scores_, axis=0)
     classes_ = np.concatenate(classes_, axis=0)
-
-    boxes_ = np.round(boxes_).astype('int32')
-    boxes_[:, :2] = np.maximum(0, boxes_[:, :2])
-    boxes_[:, 2:3] = np.minimum(image_shape[1], boxes_[:, 2:3])
-    boxes_[:, 3:4] = np.minimum(image_shape[0], boxes_[:, 3:4])
 
     return boxes_, scores_, classes_
 
