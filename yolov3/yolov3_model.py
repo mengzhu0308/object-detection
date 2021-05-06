@@ -151,6 +151,7 @@ class YOLOLoss(Layer):
             true_class_probs = targets[l][..., 5:]
             # Darknet raw box to calculate loss.
             raw_true_xy = targets[l][..., :2] * grid_shapes[l][::-1] - grid
+            raw_true_xy = K.log(raw_true_xy / (1 - raw_true_xy))
             raw_true_wh = K.log(targets[l][..., 2:4] * model_input_shape[::-1] / self.anchors[ANCHOR_MASK[l]])
             raw_true_wh = K.switch(object_mask, raw_true_wh, K.zeros_like(raw_true_wh))  # avoid log(0)=-inf
             box_loss_scale = 2 - targets[l][..., 2:3] * targets[l][..., 3:4]
