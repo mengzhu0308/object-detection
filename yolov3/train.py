@@ -59,7 +59,7 @@ if __name__ == '__main__':
         return new_image
 
     def show():
-        src_img = cv2.imread('detect_img/src.jpg')
+        src_img = cv2.imread('images/src.jpg')
         image_shape = src_img.shape[:2]
         input_image = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
         input_image = resize(input_image).astype('float32') / 255
@@ -89,7 +89,7 @@ if __name__ == '__main__':
             font_h = cv2.getTextSize(label, FONT, FONT_SCALE, FONT_THICKNESS)[0][1]
             cv2.putText(src_img, label, (left, top + cnt * font_h), FONT, FONT_SCALE, (255, 0, 0), 
                         thickness=FONT_THICKNESS)
-            cv2.imwrite('detect_img/dst.jpg', src_img)
+            cv2.imwrite('images/dst.jpg', src_img)
 
     class Show(Callback):
         def __init__(self):
