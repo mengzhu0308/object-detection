@@ -56,8 +56,8 @@ def preprocess_true_boxes(true_boxes, model_input_shape, anchors, num_classes):
         for t, n in enumerate(best_anchor):
             for l in range(NUM_LAYERS):
                 if n in ANCHOR_MASK[l]:
-                    j = np.floor(true_boxes[b, t, 0] * grid_shapes[l][0]).astype('int64')
-                    i = np.floor(true_boxes[b, t, 1] * grid_shapes[l][1]).astype('int64')
+                    i = np.floor(true_boxes[b, t, 0] * grid_shapes[l][1]).astype('int64')
+                    j = np.floor(true_boxes[b, t, 1] * grid_shapes[l][0]).astype('int64')
                     k = ANCHOR_MASK[l].index(n)
                     c = true_boxes[b, t, 4].astype('int64')
                     targets[l][b, j, i, k, 0:4] = true_boxes[b, t, 0:4]
