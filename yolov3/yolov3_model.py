@@ -79,12 +79,12 @@ def yolo_head(feats, anchors, model_input_shape):
     grid_y = K.tile(K.reshape(K.arange(0, stop=grid_shape[0]), [-1, 1, 1, 1]),
                     [1, grid_shape[1], 1, 1])
     grid = K.concatenate([grid_x, grid_y])
-    grid = K.cast(grid, K.dtype(feats))
+    grid = K.cast(grid, K.dtype(feats))[None, ...]
 
     box_xy = (K.sigmoid(feats[..., :2]) + grid) / K.cast(grid_shape[..., ::-1], K.dtype(feats))
     box_wh = K.exp(feats[..., 2:4]) * anchors_tensor / K.cast(model_input_shape[..., ::-1], K.dtype(feats))
 
-    return grid[None, ...], box_xy, box_wh
+    return grid, box_xy, box_wh
 
 def box_iou(b1, b2):
     # Expand dim to apply broadcasting.
