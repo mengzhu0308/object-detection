@@ -32,7 +32,7 @@ def yolo_head(feats, anchors, model_input_shape):
     grid_y = np.tile(np.reshape(np.arange(grid_shape[0]), [-1, 1, 1, 1]),
                      [1, grid_shape[1], 1, 1])
     grid = np.concatenate([grid_x, grid_y], axis=-1)
-    grid = grid.astype(dtype)
+    grid = grid.astype(dtype)[None, ...]
 
     box_xy = ((sigmoid(feats[..., :2]) + grid) / grid_shape[::-1]).astype(dtype)
     box_wh = (np.exp(feats[..., 2:4]) * anchors / model_input_shape[::-1]).astype(dtype)
