@@ -83,7 +83,7 @@ if __name__ == '__main__':
             cnt = counter[key]
             if cnt == 1:
                 cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
-            cv2.putText(src_img, label, (left, bottom + cnt - 1), cv2.FONT_ITALIC, (255, 0, 0), bottomLeftOrigin=True)
+            cv2.putText(src_img, label, (left, bottom + cnt - 1), cv2.FONT_ITALIC, 1, (255, 0, 0), bottomLeftOrigin=True)
             cv2.imwrite('detect_img/2007_006364_rst.jpg', src_img)
 
     class Show(Callback):
