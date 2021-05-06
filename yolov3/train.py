@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
         return new_image
 
-    def show():
+    def show_det_image():
         src_img = cv2.imread('images/src.jpg')
         image_shape = src_img.shape[:2]
         input_image = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
@@ -92,11 +92,9 @@ if __name__ == '__main__':
             cv2.imwrite('images/dst.jpg', src_img)
 
     class Show(Callback):
-        def __init__(self):
-            super(Show, self).__init__()
-
         def on_epoch_end(self, epoch, logs=None):
-            show()
+            show_det_image()
+    show = Show()
 
     print('Training......')
 
@@ -104,6 +102,6 @@ if __name__ == '__main__':
         train_generator,
         steps_per_epoch=len(train_generator),
         epochs=epochs,
-        callbacks=[Show()],
+        callbacks=[show],
         shuffle=False
     )
