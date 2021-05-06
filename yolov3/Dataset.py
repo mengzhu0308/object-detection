@@ -53,8 +53,8 @@ def boxes_padding(boxes, max_num_boxes=20):
     return box_data
 
 class Dataset:
-    def __init__(self, annotion_file):
-        with open(annotion_file, 'r', encoding='utf-8') as f:
+    def __init__(self, annotation_file):
+        with open(annotation_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
         image_paths, all_bboxes = [], []
