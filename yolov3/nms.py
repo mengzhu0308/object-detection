@@ -19,13 +19,8 @@ def nms(bboxes, scores, iou_threshold=0.5, max_num_boxes=20):
     nms_index = []
 
     while np.size(order) > 0:
-        if np.size(order) == 1:
-            i = order
-            nms_index.append(i)
-            break
-        else:
-            i = order[0]
-            nms_index.append(i)
+        i = order[0]
+        nms_index.append(i)
 
         y_min = np.maximum(y1[i], y1[order[1:]])
         x_min = np.maximum(x1[i], x1[order[1:]])
@@ -33,9 +28,7 @@ def nms(bboxes, scores, iou_threshold=0.5, max_num_boxes=20):
         x_max = np.minimum(x2[i], x2[order[1:]])
         inter = np.maximum(0, y_max - y_min) * np.maximum(0, x_max - x_min)
         iou = inter / (areas[i] + areas[order[1:]] - inter)
-        idx = np.nonzero(iou <= iou_threshold)
-        if np.size(idx) == 0:
-            break
-        order = order[np.array(idx) + 1]
+        idx = np.nonzero(iou <= iou_threshold)[0]
+        order = order[idx + 1]
 
     return nms_index[:max_num_boxes]
