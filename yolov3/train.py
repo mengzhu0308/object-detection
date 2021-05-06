@@ -87,7 +87,7 @@ if __name__ == '__main__':
             if cnt == 1:
                 cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
             font_h = cv2.getTextSize(label, FONT, FONT_SCALE, FONT_THICKNESS)[1]
-            cv2.putText(src_img, label, (left, bottom + (cnt - 1) * font_h), FONT, FONT_SCALE, (255, 0, 0), 
+            cv2.putText(src_img, label, (left, top + (cnt - 1) * font_h * 2), FONT, FONT_SCALE, (255, 0, 0), 
                         thickness=FONT_THICKNESS)
             cv2.imwrite('detect_img/dst.jpg', src_img)
 
