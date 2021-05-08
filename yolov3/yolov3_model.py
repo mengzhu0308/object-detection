@@ -44,7 +44,7 @@ def make_last_layers(x, filters, out_filters):
         x = conv_bn_act(x, filters * 2, 3)
     x = conv_bn_act(x, filters, 1)
     y = conv_bn_act(x, filters * 2, 3)
-    y = conv_bn_act(y, out_filters, 1)
+    y = Conv2D(out_filters, 1)(y)
     return x, y
 
 def yolo_bdoy(inputs, num_anchors, num_classes):
