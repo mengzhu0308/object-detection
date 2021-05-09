@@ -59,15 +59,13 @@ if __name__ == '__main__':
         return new_image
 
     def show_det_image():
-        src_img = cv2.imread('images/src.jpg')
-        image_shape = src_img.shape[:2]
-        input_image = cv2.cvtColor(src_img, cv2.COLOR_BGR2RGB)
-        input_image = resize(input_image).astype('float32') / 255
+        img = cv2.imread('images/src.jpg')
+        image_shape = img.shape[:2]
+        img = resize(img).astype('float32') / 255
         h, w = MODEL_INPUT_SHAPE
-        input_image = input_image[None, ...]
         targets = [np.zeros((1, math.ceil(h / DOWNSAMPLING_SCALE[l]), math.ceil(w / DOWNSAMPLING_SCALE[l]),
                              num_anchors // NUM_LAYERS, num_classes + 5), dtype='float32') for l in range(NUM_LAYERS)]
-        preds = model.predict_on_batch([*targets, input_image])
+        preds = model.predict_on_batch([*targets, img[None, ...])
         out_boxes, out_scores, out_classes = get_detect_rsts(preds, anchors, num_classes, MODEL_INPUT_SHAPE, image_shape)
 
         counter = Counter()
@@ -85,11 +83,11 @@ if __name__ == '__main__':
             counter.update(key)
             cnt = counter[key]
             if cnt == 1:
-                cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
+                cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
             font_h = cv2.getTextSize(label, FONT, FONT_SCALE, FONT_THICKNESS)[0][1]
-            cv2.putText(src_img, label, (left, top + cnt * font_h), FONT, FONT_SCALE, (255, 0, 0), 
+            cv2.putText(img, label, (left, top + cnt * font_h), FONT, FONT_SCALE, (255, 0, 0), 
                         thickness=FONT_THICKNESS)
-            cv2.imwrite('images/dst.jpg', src_img)
+            cv2.imwrite('images/dst.jpg', img)
 
     class Show(Callback):
         def on_epoch_end(self, epoch, logs=None):
