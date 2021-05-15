@@ -25,7 +25,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 if __name__ == '__main__':
     train_batch_size = 32
-    init_lr = 0.1
+    init_lr = 0.01
     epochs = 150
     anchors = get_anchors()
     num_anchors = len(anchors)
