@@ -16,7 +16,7 @@ from snippets import get_anchors, get_class_names
 def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
     num_anchors_per_loc = len(anchors) // NUM_LAYERS
     model_input_shape = np.array(model_input_shape, dtype='int32')
-    grid_shapes = [model_input_shape // DOWNSAMPLING_SCALE[l] for l in range(Config.NUM_LAYERS)]
+    grid_shapes = [model_input_shape // DOWNSAMPLING_SCALE[l] for l in range(NUM_LAYERS)]
     target = [np.zeros((grid_shapes[l][0], grid_shapes[l][1], num_anchors_per_loc, 5 + num_classes),
                        dtype='float32') for l in range(NUM_LAYERS)]
 
@@ -51,11 +51,11 @@ def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
     best_anchor = np.argmax(iou, axis=-1)
 
     for t, n in enumerate(best_anchor):
-        for l in range(Config.NUM_LAYERS):
-            if n in Config.ANCHOR_MASK[l]:
+        for l in range(NUM_LAYERS):
+            if n in ANCHOR_MASK[l]:
                 i = np.floor(true_boxes[t, 0] * grid_shapes[l][1]).astype('int64')
                 j = np.floor(true_boxes[t, 1] * grid_shapes[l][0]).astype('int64')
-                k = Config.ANCHOR_MASK[l].index(n)
+                k = ANCHOR_MASK[l].index(n)
                 c = true_boxes[t, 4].astype('int64')
                 target[l][j, i, k, 0:4] = true_boxes[t, 0:4]
                 target[l][j, i, k, 4] = 1
