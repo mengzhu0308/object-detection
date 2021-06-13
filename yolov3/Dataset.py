@@ -4,7 +4,6 @@
 @File:          Dataset.py
 '''
 
-from skimage import io
 import numpy as np
 import cv2
 
@@ -35,23 +34,6 @@ def resize(image, bboxes):
 
     return new_image, bboxes
 
-def boxes_padding(boxes, max_num_boxes=20):
-    box_data = np.zeros((max_num_boxes, 5), dtype='int32')
-
-    if len(boxes) > 0:
-        boxes_w = boxes[:, 2] - boxes[:, 0]
-        boxes_h = boxes[:, 3] - boxes[:, 1]
-        boxes = boxes[np.logical_and(boxes_w > 1, boxes_h > 1)]
-
-        if len(boxes) > max_num_boxes:
-            boxes = boxes[:max_num_boxes]
-
-        np.random.shuffle(boxes)
-
-        box_data[:len(boxes)] = boxes
-
-    return box_data
-
 class Dataset:
     def __init__(self, annotation_file):
         with open(annotation_file, 'r', encoding='utf-8') as f:
@@ -72,12 +54,16 @@ class Dataset:
         return len(self.image_paths)
 
     def __getitem__(self, item):
-        image = io.imread(self.image_paths[item])
+        image = cv2.imread(self.image_paths[item])
         bboxes = np.array(self.all_bboxes[item])
 
         image, bboxes = resize(image, bboxes)
 
         image = image.astype('float32') / 255
-        bboxes = boxes_padding(bboxes, max_num_boxes=MAX_NUM_BOXES)
+        bboxes_w = bboxes[:, 2] - bboxes[:, 0]
+        bboxes_h = bboxes[:, 3] - bboxes[:, 1]
+        bboxes = bboxes[np.logical_and(bboxes_w > 1, bboxes_h > 1)]
+        if len(bboxes) > 0:
+            np.random.shuffle(bboxes)
 
         return image, bboxes
