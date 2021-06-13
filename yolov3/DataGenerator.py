@@ -14,11 +14,11 @@ from snippets import NUM_LAYERS, DOWNSAMPLING_SCALE, ANCHOR_MASK, MODEL_INPUT_SH
 from snippets import get_anchors, get_class_names
 
 def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
-    num_anchors_per_loc = len(anchors) // Config.NUM_LAYERS
+    num_anchors_per_loc = len(anchors) // NUM_LAYERS
     model_input_shape = np.array(model_input_shape, dtype='int32')
-    grid_shapes = [model_input_shape // Config.DOWNSAMPLING_SCALE[l] for l in range(Config.NUM_LAYERS)]
+    grid_shapes = [model_input_shape // DOWNSAMPLING_SCALE[l] for l in range(Config.NUM_LAYERS)]
     target = [np.zeros((grid_shapes[l][0], grid_shapes[l][1], num_anchors_per_loc, 5 + num_classes),
-                       dtype='float32') for l in range(Config.NUM_LAYERS)]
+                       dtype='float32') for l in range(NUM_LAYERS)]
 
     if len(true_boxes) == 0:
         return target
@@ -27,8 +27,6 @@ def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
     boxes_xy = (true_boxes[:, 0:2] + true_boxes[:, 2:4]) // 2
     boxes_wh = true_boxes[:, 2:4] - true_boxes[:, 0:2]
 
-    '''输出单位尺度下的*_xy和*_wh
-    '''
     true_boxes[:, 0:2] = boxes_xy / model_input_shape[::-1]
     true_boxes[:, 2:4] = boxes_wh / model_input_shape[::-1]
 
@@ -41,8 +39,6 @@ def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
     box_maxes = wh / 2.
     box_mins = -box_maxes
 
-    '''这里可以推断，anchors也是在在模型输入尺度下 (model_input_shape)，而不是在原图输入尺度下 (image_shape)
-    '''
     intersect_mins = np.maximum(box_mins, anchor_mins)
     intersect_maxes = np.minimum(box_maxes, anchor_maxes)
     intersect_wh = np.maximum(intersect_maxes - intersect_mins, 0.)
@@ -109,7 +105,7 @@ class DataGenerator(BaseDataGenerator):
         for idx in index:
             image, boxes = self.dataset[idx]
             batch_images.append(image)
-            target = generate_anchor_target(boxes, Config.MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
+            target = generate_anchor_target(boxes, MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
             for i in range(3):
                 batch_targets[i].append(target[i])
 
