@@ -13,58 +13,59 @@ from sampler import BatchSampler
 from snippets import NUM_LAYERS, DOWNSAMPLING_SCALE, ANCHOR_MASK, MODEL_INPUT_SHAPE
 from snippets import get_anchors, get_class_names
 
-def preprocess_true_boxes(true_boxes, model_input_shape, anchors, num_classes):
-    num_anchors = len(anchors) // NUM_LAYERS
-
-    true_boxes = np.array(true_boxes, dtype='float32')
+def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
+    num_anchors_per_loc = len(anchors) // Config.NUM_LAYERS
     model_input_shape = np.array(model_input_shape, dtype='int32')
-    boxes_xy = (true_boxes[..., 0:2] + true_boxes[..., 2:4]) // 2
-    boxes_wh = true_boxes[..., 2:4] - true_boxes[..., 0:2]
+    grid_shapes = [model_input_shape // Config.DOWNSAMPLING_SCALE[l] for l in range(Config.NUM_LAYERS)]
+    target = [np.zeros((grid_shapes[l][0], grid_shapes[l][1], num_anchors_per_loc, 5 + num_classes),
+                       dtype='float32') for l in range(Config.NUM_LAYERS)]
 
-    true_boxes[..., 0:2] = boxes_xy / model_input_shape[::-1]
-    true_boxes[..., 2:4] = boxes_wh / model_input_shape[::-1]
+    if len(true_boxes) == 0:
+        return target
 
-    m = true_boxes.shape[0]
-    grid_shapes = [model_input_shape // DOWNSAMPLING_SCALE[l] for l in range(NUM_LAYERS)]
-    targets = [np.zeros((m, grid_shapes[l][0], grid_shapes[l][1], num_anchors, 5 + num_classes),
-                        dtype='float32') for l in range(NUM_LAYERS)]
+    true_boxes = true_boxes.astype('float32')
+    boxes_xy = (true_boxes[:, 0:2] + true_boxes[:, 2:4]) // 2
+    boxes_wh = true_boxes[:, 2:4] - true_boxes[:, 0:2]
+
+    '''输出单位尺度下的*_xy和*_wh
+    '''
+    true_boxes[:, 0:2] = boxes_xy / model_input_shape[::-1]
+    true_boxes[:, 2:4] = boxes_wh / model_input_shape[::-1]
 
     anchors = anchors[None, ...]
     anchor_maxes = anchors / 2.
     anchor_mins = -anchor_maxes
-    valid_mask = boxes_wh[..., 0] > 0
 
-    for b in range(m):
-        wh = boxes_wh[b, valid_mask[b]]
-        if len(wh) == 0:
-            continue
+    wh = boxes_wh
+    wh = wh[:, None, :]
+    box_maxes = wh / 2.
+    box_mins = -box_maxes
 
-        wh = wh[..., None, :]
-        box_maxes = wh / 2.
-        box_mins = -box_maxes
+    '''这里可以推断，anchors也是在在模型输入尺度下 (model_input_shape)，而不是在原图输入尺度下 (image_shape)
+    '''
+    intersect_mins = np.maximum(box_mins, anchor_mins)
+    intersect_maxes = np.minimum(box_maxes, anchor_maxes)
+    intersect_wh = np.maximum(intersect_maxes - intersect_mins, 0.)
+    intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
+    box_area = wh[..., 0] * wh[..., 1]
+    anchor_area = anchors[..., 0] * anchors[..., 1]
+    iou = intersect_area / (box_area + anchor_area - intersect_area)
 
-        intersect_mins = np.maximum(box_mins, anchor_mins)
-        intersect_maxes = np.minimum(box_maxes, anchor_maxes)
-        intersect_wh = np.maximum(intersect_maxes - intersect_mins, 0.)
-        intersect_area = intersect_wh[..., 0] * intersect_wh[..., 1]
-        box_area = wh[..., 0] * wh[..., 1]
-        anchor_area = anchors[..., 0] * anchors[..., 1]
-        iou = intersect_area / (box_area + anchor_area - intersect_area)
+    # Find best anchor for each true box
+    best_anchor = np.argmax(iou, axis=-1)
 
-        best_anchor = np.argmax(iou, axis=-1)
+    for t, n in enumerate(best_anchor):
+        for l in range(Config.NUM_LAYERS):
+            if n in Config.ANCHOR_MASK[l]:
+                i = np.floor(true_boxes[t, 0] * grid_shapes[l][1]).astype('int64')
+                j = np.floor(true_boxes[t, 1] * grid_shapes[l][0]).astype('int64')
+                k = Config.ANCHOR_MASK[l].index(n)
+                c = true_boxes[t, 4].astype('int64')
+                target[l][j, i, k, 0:4] = true_boxes[t, 0:4]
+                target[l][j, i, k, 4] = 1
+                target[l][j, i, k, 5 + c] = 1
 
-        for t, n in enumerate(best_anchor):
-            for l in range(NUM_LAYERS):
-                if n in ANCHOR_MASK[l]:
-                    i = np.floor(true_boxes[b, t, 0] * grid_shapes[l][1]).astype('int64')
-                    j = np.floor(true_boxes[b, t, 1] * grid_shapes[l][0]).astype('int64')
-                    k = ANCHOR_MASK[l].index(n)
-                    c = true_boxes[b, t, 4].astype('int64')
-                    targets[l][b, j, i, k, 0:4] = true_boxes[b, t, 0:4]
-                    targets[l][b, j, i, k, 4] = 1
-                    targets[l][b, j, i, k, 5 + c] = 1
-
-    return targets
+    return target
 
 class BaseDataGenerator:
     def __init__(self, dataset, batch_size=1, shuffle=False, drop_last=False):
@@ -104,14 +105,14 @@ class DataGenerator(BaseDataGenerator):
 
     def _next_data(self):
         index = self._next_index()
-        batch_images, batch_boxes = [], []
+        batch_images, batch_targets = [], [[], [], []]
         for idx in index:
             image, boxes = self.dataset[idx]
             batch_images.append(image)
-            batch_boxes.append(boxes)
+            target = generate_anchor_target(boxes, Config.MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
+            for i in range(3):
+                batch_targets[i].append(target[i])
 
-        batch_images, batch_boxes = np.array(batch_images), np.array(batch_boxes)
-        
-        true_boxes = preprocess_true_boxes(batch_boxes, MODEL_INPUT_SHAPE, get_anchors(), len(get_class_names()))
+        batch_targets = [np.array(e) for e in batch_targets]
 
-        return [*true_boxes, batch_images], None
+        return [*batch_targets, np.array(batch_images)], None
