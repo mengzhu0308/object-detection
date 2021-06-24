@@ -55,7 +55,7 @@ class Dataset:
 
     def __getitem__(self, item):
         image = cv2.imread(self.image_paths[item])
-        bboxes = np.array(self.all_bboxes[item])
+        bboxes = np.array(self.all_bboxes[item], dtype='int32')
 
         image, bboxes = resize(image, bboxes)
 
