@@ -11,6 +11,7 @@ from collections import Counter
 import math
 import numpy as np
 import cv2
+from copy import deepcopy
 import torch
 from torch.optim.adamw import AdamW
 from torch.utils.data.dataloader import DataLoader
@@ -104,6 +105,7 @@ if __name__ == '__main__':
 
     def show_det_image():
         img = cv2.imread('images/src.jpg')
+        src_img = deepcopy(img)
         image_shape = img.shape[:2]
         img = resize(img).astype('float32') / 255
 
@@ -131,11 +133,11 @@ if __name__ == '__main__':
             counter.update(key)
             cnt = counter[key]
             if cnt == 1:
-                cv2.rectangle(img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
+                cv2.rectangle(src_img, (left, top), (right, bottom), (0, 0, 255), thickness=1)
             font_h = cv2.getTextSize(label, FONT, FONT_SCALE, FONT_THICKNESS)[0][1]
-            cv2.putText(img, label, (left, top + cnt * font_h), FONT, FONT_SCALE, (255, 0, 0),
+            cv2.putText(src_img, label, (left, top + cnt * font_h), FONT, FONT_SCALE, (255, 0, 0),
                         thickness=FONT_THICKNESS)
-            cv2.imwrite('images/dst.jpg', img)
+            cv2.imwrite('images/dst.jpg', src_img)
 
     print(f'Train on {len(train_dataset)} samples with train_batch_size equalling {train_batch_size}. ')
     print(f'init_lr eualling {init_lr}')
