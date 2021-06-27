@@ -112,7 +112,7 @@ if __name__ == '__main__':
             img = torch.from_numpy(img.transpose(2, 0, 1)[None, ...])
             img = img.to(device)
             preds = model(img)
-            preds = [e.numpy() for e in preds]
+            preds = [e.cpu().numpy() for e in preds]
 
         out_boxes, out_scores, out_classes = get_detect_rsts(preds, anchors, num_classes, Config.MODEL_INPUT_SHAPE, image_shape)
 
