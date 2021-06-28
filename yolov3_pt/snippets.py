@@ -13,7 +13,7 @@ from nms import nms
 from Config import Config
 
 def yolo_head(feats, anchors_per_location, model_input_shape):
-    feats = feats.transpose((0, 3, 2, 1, 4)).transpose((0, 1, 4, 3, 2)).transpose((0, 1, 2, 4, 3))
+    feats = feats.transpose((0, 3, 4, 2, 1))
     dtype = feats.dtype
     num_anchors_per_location = len(anchors_per_location)
     anchors_per_location = np.reshape(anchors_per_location, [1, 1, 1, num_anchors_per_location, 2])
