@@ -141,13 +141,17 @@ if __name__ == '__main__':
 
     print(f'Train on {len(train_dataset)} samples with train_batch_size equalling {train_batch_size}. ')
     print(f'init_lr eualling {init_lr}')
-
+    
+    best_loss = math.inf
     last_epoch = initial_epoch + epochs
     for i_epoch in range(initial_epoch, last_epoch):
         print(f'Epoch {i_epoch + 1}/{last_epoch}')
 
         loss = train()
-        show_det_image()
+        
+        if loss < best_loss:
+            best_loss = loss
+            show_det_image()
 
         if math.isnan(loss) or math.isinf(loss):
             print('nan or inf')
