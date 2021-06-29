@@ -92,8 +92,13 @@ if __name__ == '__main__':
             cv2.imwrite('images/dst.jpg', src_img)
 
     class Show(Callback):
+        def __init__(self):
+            self.best_loss = math.inf
+                                        
         def on_epoch_end(self, epoch, logs=None):
-            show_det_image()
+            if logs['loss'] < self.best_loss:
+                self.best_loss = logs['loss']
+                show_det_image()
     show = Show()
 
     print('Training......')
