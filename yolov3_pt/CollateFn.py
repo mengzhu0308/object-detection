@@ -10,7 +10,14 @@ import numpy as np
 import torch
 
 from Config import Config
-from iou import iou
+
+def bbox_iou(true_box, anchors):
+    min_xy = np.maximum(true_box[:, :2], anchors[:, :2])
+    max_xy = np.minimum(true_box[:, 2:4], anchors[:, 2:4])
+    inter_area = np.maximum(max_xy[:, 0] - min_xy[:, 0], 0) * np.maximum(max_xy[:, 1] - min_xy[:, 1], 0)
+    union_area = ((true_box[:, 2] - true_box[:, 0]) * (true_box[:, 3] - true_box[:, 1]) +
+                  (anchors[:, 2] - anchors[:, 0]) * (anchors[:, 3] - anchors[:, 1]) - inter_area)
+    return inter_area / union_area
 
 class CollateFn:
     def __init__(self,
@@ -59,10 +66,10 @@ class CollateFn:
                     xy = xy / self.model_input_shape[::-1] * self.feat_shapes[l][::-1]
                     ij = xy.astype('int32')
 
-                    bbox_shapes = np.array([0, 0, wh[0], wh[1]], dtype='float32')[None, :]
+                    bbox_shape = np.array([0, 0, wh[0], wh[1]], dtype='float32')[None, :]
                     anchor_shapes = np.concatenate([np.zeros((self.num_anchors_per_location, 2), dtype='float32'),
                                                     self.anchors_per_location[l].astype('float32')], axis=1)
-                    iou_cur = iou(bbox_shapes, anchor_shapes)
+                    iou_cur = bbox_iou(bbox_shape, anchor_shapes)
                     best_n = np.argmax(iou_cur)
 
                     target[b, 0:2, best_n, ij[1], ij[0]] = xy - ij
