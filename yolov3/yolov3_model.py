@@ -88,7 +88,7 @@ def yolo_head(feats, anchors, model_input_shape):
 
 def box_iou(b1, b2):
     # Expand dim to apply broadcasting.
-    b1 = b1[:, None, :]
+    b1 = K.expand_dims(b1, axis=-2)
     b1_xy = b1[..., :2]
     b1_wh = b1[..., 2:4]
     b1_wh_half = b1_wh / 2.
@@ -96,7 +96,7 @@ def box_iou(b1, b2):
     b1_maxes = b1_xy + b1_wh_half
 
     # Expand dim to apply broadcasting.
-    b2 = b2[None, :, :]
+    b2 = K.expand_dims(b2, axis=0)
     b2_xy = b2[..., :2]
     b2_wh = b2[..., 2:4]
     b2_wh_half = b2_wh / 2.
