@@ -12,7 +12,7 @@ from keras import backend as K
 from keras.layers import *
 from keras import Model
 
-from snippets import ANCHOR_MASK, DOWNSAMPLING_SCALE, NUM_LAYERS
+from snippets import ANCHOR_MASK, DOWNSAMPLING_SCALES, NUM_LAYERS
 
 def conv_bn_act(x, filters, kernel_size, strides=1):
     x = Conv2D(filters, kernel_size, strides=strides, padding='same', use_bias=False)(x)
@@ -208,8 +208,8 @@ def create_yolov3(anchors, num_classes, model_input_shape):
     h, w = model_input_shape
     inputs = Input(shape=(h, w, 3), dtype='float32')
     outputs = yolo_bdoy(inputs, num_anchors, num_classes)
-    targets = [Input(shape=(math.ceil(h / DOWNSAMPLING_SCALE[l]),
-                            math.ceil(w / DOWNSAMPLING_SCALE[l]),
+    targets = [Input(shape=(math.ceil(h / DOWNSAMPLING_SCALES[l]),
+                            math.ceil(w / DOWNSAMPLING_SCALES[l]),
                             num_anchors, num_classes + 5), dtype='float32') for l in range(NUM_LAYERS)]
     outputs = YOLOLoss(model_input_shape, anchors, num_classes)([*targets, *outputs])
     return Model([*targets, inputs], outputs)
