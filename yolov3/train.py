@@ -15,7 +15,7 @@ import numpy as np
 from keras.optimizers import SGD
 from keras.callbacks import Callback
 
-from snippets import MODEL_INPUT_SHAPE, DOWNSAMPLING_SCALE, NUM_LAYERS
+from snippets import MODEL_INPUT_SHAPE, DOWNSAMPLING_SCALES, NUM_LAYERS
 from snippets import get_anchors, get_class_names, get_detect_rsts
 from yolov3_model import create_yolov3
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         image_shape = img.shape[:2]
         img = resize(img).astype('float32') / 255
         h, w = MODEL_INPUT_SHAPE
-        targets = [np.zeros((1, math.ceil(h / DOWNSAMPLING_SCALE[l]), math.ceil(w / DOWNSAMPLING_SCALE[l]),
+        targets = [np.zeros((1, math.ceil(h / DOWNSAMPLING_SCALES[l]), math.ceil(w / DOWNSAMPLING_SCALES[l]),
                              num_anchors // NUM_LAYERS, num_classes + 5), dtype='float32') for l in range(NUM_LAYERS)]
         preds = model.predict_on_batch([*targets, img[None, ...])
         out_boxes, out_scores, out_classes = get_detect_rsts(preds, anchors, num_classes, MODEL_INPUT_SHAPE, image_shape)
