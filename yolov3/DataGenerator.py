@@ -10,7 +10,7 @@ import numpy as np
 
 from sampler import BatchSampler
 
-from snippets import NUM_LAYERS, DOWNSAMPLING_SCALE, ANCHOR_MASK, MODEL_INPUT_SHAPE
+from snippets import NUM_LAYERS, DOWNSAMPLING_SCALES, ANCHOR_MASK, MODEL_INPUT_SHAPE
 from snippets import get_anchors, get_class_names
 
 def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
