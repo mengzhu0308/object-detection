@@ -32,7 +32,7 @@ class CollateFn:
         self.anchors_per_location = [anchors[am] for am in anchor_mask]
         self.num_anchors_per_location = len(anchor_mask[0])
         self.num_layers = len(anchor_mask)
-        self.feat_shapes = [np.ceil(self.model_input_shape / ds) for ds in downsampling_scales]
+        self.feat_shapes = [np.ceil(self.model_input_shape / ds).astype('int32') for ds in downsampling_scales]
         self.downsampling_scales = downsampling_scales
         self.ignore_threshold = ignore_threshold
 
