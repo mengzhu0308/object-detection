@@ -75,7 +75,7 @@ class CollateFn:
                     target[b, ij[1], ij[0], best_n, 0:2] = xy - ij
                     target[b, ij[1], ij[0], best_n, 2:4] = np.log(wh / self.anchors_per_location[l][best_n])
                     target[b, ij[1], ij[0], best_n, 4] = 1
-                    target[b, ij[1], ij[0], best_n, int(true_bbox[-1])] = 1
+                    target[b, ij[1], ij[0], best_n, 5 + int(true_bbox[-1])] = 1
 
                     bbox_loss_scale_mem[b, ij[1], ij[0], best_n, :] = wh / self.model_input_shape[::-1]
 
