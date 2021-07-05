@@ -51,7 +51,7 @@ class CollateFn:
             np.zeros(shape=(batch_size, h, w, self.num_anchors_per_location, 2), dtype='float32')
             for h, w in self.feat_shapes]
         ignore_masks = [
-            np.zeros(shape=(batch_size, h, w, self.num_anchors_per_location, 1), dtype='float32')
+            np.oness(shape=(batch_size, h, w, self.num_anchors_per_location, 1), dtype='float32')
             for h, w in self.feat_shapes]
 
         for l in range(self.num_layers):
@@ -78,7 +78,8 @@ class CollateFn:
                     target[b, ij[1], ij[0], best_n, 5 + int(true_bbox[-1])] = 1
 
                     bbox_loss_scale_mem[b, ij[1], ij[0], best_n, :] = wh / self.model_input_shape[::-1]
-
+                    
+                    ignore_mask[b, ij[1], ij[0], best_n, 0] = 0
                     ignore_mask[b, ij[1], ij[0], iou > self.ignore_threshold, 0] = 0
 
             bbox_loss_scales.append(2 - bbox_loss_scale_mem[..., 0:1] * bbox_loss_scale_mem[..., 1:2])
