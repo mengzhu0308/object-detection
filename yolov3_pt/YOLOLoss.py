@@ -28,7 +28,7 @@ class YOLOLoss(nn.Module):
 
         xy_loss = self.bce_loss(pred[..., 0:2], target[..., 0:2]) * bbox_loss_scale * object_mask
         wh_loss = self.mse_loss(pred[..., 2:4], target[..., 2:4]) * bbox_loss_scale * object_mask
-        conf_loss = self.bce_loss(pred[..., 4:5], object_mask) * (object_mask + (1 - object_mask) * ignore_mask)
+        conf_loss = self.bce_loss(pred[..., 4:5], object_mask) * (object_mask + ignore_mask)
         cls_loss = self.bce_loss(pred[..., 5:], target[..., 5:]) * object_mask
 
         xy_loss = torch.sum(xy_loss, dim=[1, 2, 3, 4])
