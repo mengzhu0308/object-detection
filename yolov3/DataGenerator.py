@@ -16,7 +16,7 @@ from snippets import get_anchors, get_class_names
 def generate_anchor_target(true_boxes, model_input_shape, anchors, num_classes):
     num_anchors_per_loc = len(anchors) // NUM_LAYERS
     model_input_shape = np.array(model_input_shape, dtype='int32')
-    grid_shapes = [np.ceil(model_input_shape / Config.DOWNSAMPLING_SCALES[l]) for l in range(NUM_LAYERS)]
+    grid_shapes = [np.ceil(model_input_shape / Config.DOWNSAMPLING_SCALES[l]).astype('int32') for l in range(NUM_LAYERS)]
     target = [np.zeros((grid_shapes[l][0], grid_shapes[l][1], num_anchors_per_loc, 5 + num_classes),
                        dtype='float32') for l in range(NUM_LAYERS)]
 
