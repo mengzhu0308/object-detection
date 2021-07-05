@@ -24,12 +24,12 @@ class YOLOLoss(nn.Module):
         return sum(losses)
 
     def _cal_loss(self, pred, target, bbox_loss_scale, ignore_mask):
-        object_mask = target[:, 4:5, ...]
+        object_mask = target[..., 4:5]
 
-        xy_loss = self.bce_loss(pred[:, 0:2, ...], target[:, 0:2, ...]) * bbox_loss_scale * object_mask
-        wh_loss = self.mse_loss(pred[:, 2:4, ...], target[:, 2:4, ...]) * bbox_loss_scale * object_mask
-        conf_loss = self.bce_loss(pred[:, 4:5, ...], object_mask) * (object_mask + (1 - object_mask) * ignore_mask)
-        cls_loss = self.bce_loss(pred[:, 5:, ...], target[:, 5:, ...]) * object_mask
+        xy_loss = self.bce_loss(pred[..., 0:2], target[..., 0:2]) * bbox_loss_scale * object_mask
+        wh_loss = self.mse_loss(pred[..., 2:4], target[..., 2:4]) * bbox_loss_scale * object_mask
+        conf_loss = self.bce_loss(pred[..., 4:5], object_mask) * (object_mask + (1 - object_mask) * ignore_mask)
+        cls_loss = self.bce_loss(pred[..., 5:], target[..., 5:]) * object_mask
 
         xy_loss = torch.sum(xy_loss, dim=[1, 2, 3, 4])
         wh_loss = torch.sum(wh_loss, dim=[1, 2, 3, 4])
