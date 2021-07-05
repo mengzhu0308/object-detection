@@ -58,14 +58,14 @@ class YOLOBody(nn.Module):
 
         self.conv_bn_act1 = nn.Sequential(
             nn.Conv2d(512, 256, 1, bias=False),
-            nn.BatchNorm2d(256),
+            nn.BatchNorm2d(256, eps=1e-12, momentum=1e-3),
             nonlinear
         )
         self.last_layer2 = MakeLastLayer(768, 256, out_channels)
 
         self.conv_bn_act2 = nn.Sequential(
             nn.Conv2d(256, 128, 1, bias=False),
-            nn.BatchNorm2d(128),
+            nn.BatchNorm2d(128, eps=1e-12, momentum=1e-3),
             nonlinear
         )
         self.last_layer3 = MakeLastLayer(384, 128, out_channels)
@@ -75,7 +75,7 @@ class YOLOBody(nn.Module):
 
         x, y1 = self.last_layer1(fp1)
         b, _, h, w = y1.size()
-        y1 = y1.view(b, -1, self.num_anchors_per_location, h, w)
+        y1 = y1.view(b, -1, self.num_anchors_per_location, h, w).permute(0, 3, 4, 2, 1).contiguous()
         y1 = self._act_pred(y1)
 
         x = self.conv_bn_act1(x)
@@ -84,7 +84,7 @@ class YOLOBody(nn.Module):
 
         x, y2 = self.last_layer2(x)
         b, _, h, w = y2.size()
-        y2 = y2.view(b, -1, self.num_anchors_per_location, h, w)
+        y2 = y2.view(b, -1, self.num_anchors_per_location, h, w).permute(0, 3, 4, 2, 1).contiguous()
         y2 = self._act_pred(y2)
 
         x = self.conv_bn_act2(x)
@@ -93,15 +93,15 @@ class YOLOBody(nn.Module):
 
         x, y3 = self.last_layer3(x)
         b, _, h, w = y3.size()
-        y3 = y3.view(b, -1, self.num_anchors_per_location, h, w)
+        y3 = y3.view(b, -1, self.num_anchors_per_location, h, w).permute(0, 3, 4, 2, 1).contiguous()
         y3 = self._act_pred(y3)
 
         return y1, y2, y3
 
     def _act_pred(self, pred):
-        xy = torch.sigmoid(pred[:, 0:2, ...])
-        wh = pred[:, 2:4, ...]
-        conf = torch.sigmoid(pred[:, 4:5, ...])
-        cls = torch.sigmoid(pred[:, 5:, ...])
+        xy = torch.sigmoid(pred[..., 0:2])
+        wh = pred[..., 2:4]
+        conf = torch.sigmoid(pred[..., 4:5])
+        cls = torch.sigmoid(pred[..., 5:])
 
-        return torch.cat([xy, wh, conf, cls], dim=1)
+        return torch.cat([xy, wh, conf, cls], dim=-1)
