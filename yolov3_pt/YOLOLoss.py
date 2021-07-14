@@ -25,31 +25,33 @@ class YOLOLoss(nn.Module):
     def forward(self, raw_preds, targets):
         num_layers = len(raw_preds)
         batch_size = raw_preds[0].size(0)
+        dtype, device = raw_preds[0].dtype, raw_preds[0].device
+        model_input_shape_flip = torch.flip(self.model_input_shape.type(dtype=dtype), [0])
         losses = []
+
         for l in range(num_layers):
             object_mask = targets[l][..., 4:5]
             bbox_loss_scale = 2 - targets[l][..., 2:3] * targets[l][..., 3:4]
-            grid_shape = torch.as_tensor(raw_preds[l].size()[1:3], dtype=torch.int32, device=targets[l].device)
-            grid = self._get_grid(grid_shape, targets[l].device, targets[l].dtype)
-            raw_target_xy = targets[l][..., 0:2] * torch.flip(grid_shape, [0]) - grid[None, ...]
-            raw_target_wh = torch.log(targets[l][..., 2:4] * torch.flip(self.model_input_shape, [0])
-                                      / self.anchors[self.anchor_mask[l]] + 1e-12)
+            grid_shape = raw_preds[l].size()[1:3]
+            grid_shape_flip = torch.flip(torch.as_tensor(grid_shape, dtype=dtype, device=device), [0])
+            grid = self._get_grid(grid_shape, device, dtype)
+            raw_target_xy = targets[l][..., 0:2] * grid_shape_flip - grid[None, ...]
+            raw_target_wh = torch.log(targets[l][..., 2:4] * model_input_shape_flip / self.anchors[self.anchor_mask[l]] + 1e-12)
 
-            pred_xy = (raw_preds[l][..., 0:2] + grid) / torch.flip(grid_shape, [0])
-            pred_wh = torch.exp(raw_preds[l][..., 2:4]) * self.anchors[self.anchor_mask[l]] / torch.flip(self.model_input_shape, [0])
+            pred_xy = (raw_preds[l][..., 0:2] + grid[None, ...]) / grid_shape_flip
+            pred_wh = torch.exp(raw_preds[l][..., 2:4]) * self.anchors[self.anchor_mask[l]] / model_input_shape_flip
             target_bbox = targets[l][..., 0:4]
 
             ignore_mask = []
             for b in range(batch_size):
-                valid_indexs = torch.flatten(torch.nonzero(torch.flatten(object_mask[b])))
-                valid_target_bbox = target_bbox[b].view(-1, 4)[valid_indexs, :]
+                valid_target_bbox = target_bbox[b][object_mask[b][..., 0].type(dtype=torch.bool)]
 
                 if valid_target_bbox.size(0) != 0:
                     iou = self._bbox_iou(valid_target_bbox[:, 0:2], valid_target_bbox[:, 2:4], pred_xy[b], pred_wh[b])
                     max_iou = torch.max(iou, dim=-1, keepdim=True)[0]
-                    ignore_mask.append((max_iou < self.ignore_thresh)[None, ...])
+                    ignore_mask.append((max_iou < self.ignore_thresh).type(dtype=dtype)[None, ...])
                 else:
-                    ignore_mask.append(torch.full_like(pred_xy[b][..., 0:1], True)[None, ...])
+                    ignore_mask.append(torch.ones_like(pred_xy[b][..., 0:1])[None, ...])
             ignore_mask = torch.cat(ignore_mask, dim=0)
 
             xy_loss = self.bce_loss(raw_preds[l][..., 0:2], raw_target_xy) * bbox_loss_scale * object_mask
