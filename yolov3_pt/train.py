@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 from copy import deepcopy
 import torch
-from torch.optim.adamw import AdamW
+from torch.optim.adam import Adam
 from torch.utils.data.dataloader import DataLoader
 
 from Config import Config
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                                   collate_fn=collate_fn)
 
     model = YOLOBody(DarkNetBody, num_anchors_per_location, num_classes).to(device)
-    optimizer = AdamW(model.parameters(), lr=init_lr)
+    optimizer = Adam(model.parameters(), lr=init_lr)
     criterion = YOLOLoss().to(device)
 
     num_train_batches = len(train_dataloader)
@@ -60,11 +60,9 @@ if __name__ == '__main__':
         total_loss = 0.
 
         model.train()
-        for i_batch, (images, targets, bbox_loss_scales, ignore_masks) in enumerate(train_dataloader):
+        for i_batch, (images, targets) in enumerate(train_dataloader):
             images = images.to(device)
             targets = [e.to(device) for e in targets]
-            bbox_loss_scales = [e.to(device) for e in bbox_loss_scales]
-            ignore_masks = [e.to(device) for e in ignore_masks]
             preds = model(images)
             loss = criterion(preds, targets, bbox_loss_scales, ignore_masks)
             optimizer.zero_grad()
