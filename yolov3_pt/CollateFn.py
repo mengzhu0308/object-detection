@@ -61,9 +61,7 @@ class CollateFn:
             box_area = wh[..., 0] * wh[..., 1]
             anchor_area = anchors[..., 0] * anchors[..., 1]
             ious = intersect_area / (box_area + anchor_area - intersect_area)
-
-            '''对于任一标签，与其有最大IOU的Anchors为正样本
-            '''
+            
             gt_argmax_ious = np.argmax(ious, axis=-1)
             for t, n in enumerate(gt_argmax_ious):
                 for l in range(self.num_layers):
