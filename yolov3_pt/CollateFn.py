@@ -31,7 +31,7 @@ class CollateFn:
 
         batch_image = [t[0].transpose(2, 0, 1) for t in data]
         batch_image = torch.from_numpy(np.array(batch_image))
-        batch_true_bboxes = [t[-1] for t in data]
+        batch_true_bboxes = [t[-1].astype('float32') for t in data]
 
         targets = [
             np.zeros(shape=(batch_size, h, w, self.num_anchors_per_location, self.num_classes + 5), dtype='float32')
